@@ -23,6 +23,15 @@
  * @author corydiers@google.com (Cory Diers)
  */
 
+goog.provide('blocklyApp.VariableRenameModalComponent');
+
+goog.require('Blockly.CommonModal');
+goog.require('blocklyApp.AudioService');
+goog.require('blocklyApp.KeyboardInputService');
+goog.require('blocklyApp.TranslatePipe');
+goog.require('blocklyApp.VariableModalService');
+
+
 blocklyApp.VariableRenameModalComponent = ng.core.Component({
   selector: 'blockly-rename-variable-modal',
   template: `
@@ -33,6 +42,10 @@ blocklyApp.VariableRenameModalComponent = ng.core.Component({
       <div id="varModal" class="blocklyModal" role="alertdialog"
            (click)="$event.stopPropagation()" tabindex="0"
            aria-labelledby="variableModalHeading">
+          <h3 id="variableModalHeading">
+            Rename the "{{currentVariableName}}" variable...
+          </h3>
+
           <form id="varForm">
             <p id="inputLabel">New Variable Name:
               <input id="mainFieldId" type="text" [ngModel]="VALUE"
@@ -40,10 +53,10 @@ blocklyApp.VariableRenameModalComponent = ng.core.Component({
                      aria-labelledby="inputLabel" />
             </p>
             <hr>
-            <button id="submitButton" (click)="submit()">
+            <button type="button" id="submitButton" (click)="submit()">
               SUBMIT
             </button>
-            <button id="cancelButton" (click)="dismissModal()">
+            <button type="button" id="cancelButton" (click)="dismissModal()">
               CANCEL
             </button>
           </form>
@@ -59,10 +72,10 @@ blocklyApp.VariableRenameModalComponent = ng.core.Component({
       this.workspace = blocklyApp.workspace;
       this.variableModalService = variableService;
       this.audioService = audioService;
-      this.keyboardInputService = keyboardService
+      this.keyboardInputService = keyboardService;
       this.modalIsVisible = false;
       this.activeButtonIndex = -1;
-      this.currentVariableName = "";
+      this.currentVariableName = '';
 
       var that = this;
       this.variableModalService.registerPreRenameShowHook(
@@ -73,7 +86,7 @@ blocklyApp.VariableRenameModalComponent = ng.core.Component({
           Blockly.CommonModal.setupKeyboardOverrides(that);
 
           setTimeout(function() {
-            document.getElementById('mainFieldId').focus();
+            document.getElementById('varModal').focus();
           }, 150);
         }
       );
@@ -93,15 +106,16 @@ blocklyApp.VariableRenameModalComponent = ng.core.Component({
   getInteractiveElements: Blockly.CommonModal.getInteractiveElements,
   // Gets the container with interactive elements.
   getInteractiveContainer: function() {
-    return document.getElementById("varForm");
+    return document.getElementById('varForm');
   },
   // Submits the name change for the variable.
   submit: function() {
     this.workspace.renameVariable(this.currentVariableName, this.variableName);
-    this.hideModal_();
+    this.dismissModal();
   },
   // Dismisses and closes the modal.
   dismissModal: function() {
+    this.variableModalService.hideModal();
     this.hideModal_();
   }
 })

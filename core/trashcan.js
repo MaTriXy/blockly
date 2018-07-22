@@ -26,7 +26,6 @@
 
 goog.provide('Blockly.Trashcan');
 
-goog.require('goog.Timer');
 goog.require('goog.dom');
 goog.require('goog.math');
 goog.require('goog.math.Rect');
@@ -166,31 +165,43 @@ Blockly.Trashcan.prototype.createDom = function() {
   */
   this.svgGroup_ = Blockly.utils.createSvgElement('g',
       {'class': 'blocklyTrash'}, null);
+  var clip;
   var rnd = String(Math.random()).substring(2);
-  var clip = Blockly.utils.createSvgElement('clipPath',
+  clip = Blockly.utils.createSvgElement('clipPath',
       {'id': 'blocklyTrashBodyClipPath' + rnd},
       this.svgGroup_);
   Blockly.utils.createSvgElement('rect',
-      {'width': this.WIDTH_, 'height': this.BODY_HEIGHT_,
-       'y': this.LID_HEIGHT_},
+      {
+        'width': this.WIDTH_,
+        'height': this.BODY_HEIGHT_,
+        'y': this.LID_HEIGHT_
+      },
       clip);
   var body = Blockly.utils.createSvgElement('image',
-      {'width': Blockly.SPRITE.width, 'x': -this.SPRITE_LEFT_,
-       'height': Blockly.SPRITE.height, 'y': -this.SPRITE_TOP_,
-       'clip-path': 'url(#blocklyTrashBodyClipPath' + rnd + ')'},
+      {
+        'width': Blockly.SPRITE.width,
+        'x': -this.SPRITE_LEFT_,
+        'height': Blockly.SPRITE.height,
+        'y': -this.SPRITE_TOP_,
+        'clip-path': 'url(#blocklyTrashBodyClipPath' + rnd + ')'
+      },
       this.svgGroup_);
   body.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href',
       this.workspace_.options.pathToMedia + Blockly.SPRITE.url);
 
-  var clip = Blockly.utils.createSvgElement('clipPath',
+  clip = Blockly.utils.createSvgElement('clipPath',
       {'id': 'blocklyTrashLidClipPath' + rnd},
       this.svgGroup_);
   Blockly.utils.createSvgElement('rect',
       {'width': this.WIDTH_, 'height': this.LID_HEIGHT_}, clip);
   this.svgLid_ = Blockly.utils.createSvgElement('image',
-      {'width': Blockly.SPRITE.width, 'x': -this.SPRITE_LEFT_,
-       'height': Blockly.SPRITE.height, 'y': -this.SPRITE_TOP_,
-       'clip-path': 'url(#blocklyTrashLidClipPath' + rnd + ')'},
+      {
+        'width': Blockly.SPRITE.width,
+        'x': -this.SPRITE_LEFT_,
+        'height': Blockly.SPRITE.height,
+        'y': -this.SPRITE_TOP_,
+        'clip-path': 'url(#blocklyTrashLidClipPath' + rnd + ')'
+      },
       this.svgGroup_);
   this.svgLid_.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href',
       this.workspace_.options.pathToMedia + Blockly.SPRITE.url);
@@ -222,7 +233,7 @@ Blockly.Trashcan.prototype.dispose = function() {
   }
   this.svgLid_ = null;
   this.workspace_ = null;
-  goog.Timer.clear(this.lidTask_);
+  clearTimeout(this.lidTask_);
 };
 
 /**
@@ -287,7 +298,7 @@ Blockly.Trashcan.prototype.setOpen_ = function(state) {
   if (this.isOpen == state) {
     return;
   }
-  goog.Timer.clear(this.lidTask_);
+  clearTimeout(this.lidTask_);
   this.isOpen = state;
   this.animateLid_();
 };
@@ -307,7 +318,7 @@ Blockly.Trashcan.prototype.animateLid_ = function() {
   var opacity = goog.math.lerp(0.4, 0.8, this.lidOpen_);
   this.svgGroup_.style.opacity = opacity;
   if (this.lidOpen_ > 0 && this.lidOpen_ < 1) {
-    this.lidTask_ = goog.Timer.callOnce(this.animateLid_, 20, this);
+    this.lidTask_ = setTimeout(this.animateLid_.bind(this), 20);
   }
 };
 

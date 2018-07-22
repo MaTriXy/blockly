@@ -52,14 +52,14 @@ Blockly.Icon.prototype.SIZE = 17;
 /**
  * Bubble UI (if visible).
  * @type {Blockly.Bubble}
- * @private
+ * @protected
  */
 Blockly.Icon.prototype.bubble_ = null;
 
 /**
  * Absolute coordinate of icon's center.
  * @type {goog.math.Coordinate}
- * @private
+ * @protected
  */
 Blockly.Icon.prototype.iconXY_ = null;
 
@@ -79,14 +79,14 @@ Blockly.Icon.prototype.createIcon = function() {
   this.iconGroup_ = Blockly.utils.createSvgElement('g',
       {'class': 'blocklyIconGroup'}, null);
   if (this.block_.isInFlyout) {
-    Blockly.utils.addClass(/** @type {!Element} */ (this.iconGroup_),
-                      'blocklyIconGroupReadonly');
+    Blockly.utils.addClass(
+        /** @type {!Element} */ (this.iconGroup_), 'blocklyIconGroupReadonly');
   }
   this.drawIcon_(this.iconGroup_);
 
   this.block_.getSvgRoot().appendChild(this.iconGroup_);
-  Blockly.bindEventWithChecks_(this.iconGroup_, 'mouseup', this,
-      this.iconClick_);
+  Blockly.bindEventWithChecks_(
+      this.iconGroup_, 'mouseup', this, this.iconClick_);
   this.updateEditable();
 };
 
@@ -119,7 +119,7 @@ Blockly.Icon.prototype.isVisible = function() {
 /**
  * Clicking on the icon toggles if the bubble is visible.
  * @param {!Event} e Mouse click event.
- * @private
+ * @protected
  */
 Blockly.Icon.prototype.iconClick_ = function(e) {
   if (this.block_.workspace.isDragging()) {
@@ -170,7 +170,7 @@ Blockly.Icon.prototype.renderIcon = function(cursorX) {
 
 /**
  * Notification that the icon has moved.  Update the arrow accordingly.
- * @param {!goog.math.Coordinate} xy Absolute location.
+ * @param {!goog.math.Coordinate} xy Absolute location in workspace coordinates.
  */
 Blockly.Icon.prototype.setIconLocation = function(xy) {
   this.iconXY_ = xy;
@@ -197,7 +197,8 @@ Blockly.Icon.prototype.computeIconLocation = function() {
 
 /**
  * Returns the center of the block's icon relative to the surface.
- * @return {!goog.math.Coordinate} Object with x and y properties.
+ * @return {!goog.math.Coordinate} Object with x and y properties in workspace
+ *     coordinates.
  */
 Blockly.Icon.prototype.getIconLocation = function() {
   return this.iconXY_;

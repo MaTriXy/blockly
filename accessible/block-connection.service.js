@@ -23,6 +23,12 @@
  * @author sll@google.com (Sean Lip)
  */
 
+goog.provide('blocklyApp.BlockConnectionService');
+
+goog.require('blocklyApp.AudioService');
+goog.require('blocklyApp.NotificationsService');
+
+
 blocklyApp.BlockConnectionService = ng.core.Class({
   constructor: [
       blocklyApp.NotificationsService, blocklyApp.AudioService,
@@ -95,7 +101,7 @@ blocklyApp.BlockConnectionService = ng.core.Class({
   },
   attachToMarkedConnection: function(block) {
     var xml = Blockly.Xml.blockToDom(block);
-    var reconstitutedBlock = Blockly.Xml.domToBlock(blocklyApp.workspace, xml);
+    var reconstitutedBlock = Blockly.Xml.domToBlock(xml, blocklyApp.workspace);
 
     var targetConnection = null;
     if (this.markedConnection_.targetBlock() &&

@@ -52,6 +52,7 @@ Code.LANGUAGE_NAME = {
   'is': 'Íslenska',
   'it': 'Italiano',
   'ja': '日本語',
+  'kab': 'Kabyle',
   'ko': '한국어',
   'mk': 'Македонски',
   'ms': 'Bahasa Melayu',
@@ -92,7 +93,7 @@ Code.workspace = null;
  * Extracts a parameter from the URL.
  * If the parameter is absent default_value is returned.
  * @param {string} name The name of the parameter.
- * @param {string} defaultValue Value to return if paramater not found.
+ * @param {string} defaultValue Value to return if parameter not found.
  * @return {string} The parameter value or the default value if not found.
  */
 Code.getStringParamFromUrl = function(name, defaultValue) {
@@ -157,10 +158,8 @@ Code.loadBlocks = function(defaultXml) {
  */
 Code.changeLanguage = function() {
   // Store the blocks for the duration of the reload.
-  // This should be skipped for the index page, which has no blocks and does
-  // not load Blockly.
   // MSIE 11 does not support sessionStorage on file:// URLs.
-  if (typeof Blockly != 'undefined' && window.sessionStorage) {
+  if (window.sessionStorage) {
     var xml = Blockly.Xml.workspaceToDom(Code.workspace);
     var text = Blockly.Xml.domToText(xml);
     window.sessionStorage.loadOnceBlocks = text;
@@ -200,14 +199,8 @@ Code.bindClick = function(el, func) {
  * Load the Prettify CSS and JavaScript.
  */
 Code.importPrettify = function() {
-  //<link rel="stylesheet" href="../prettify.css">
-  //<script src="../prettify.js"></script>
-  var link = document.createElement('link');
-  link.setAttribute('rel', 'stylesheet');
-  link.setAttribute('href', '../prettify.css');
-  document.head.appendChild(link);
   var script = document.createElement('script');
-  script.setAttribute('src', '../prettify.js');
+  script.setAttribute('src', 'https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js');
   document.head.appendChild(script);
 };
 
@@ -311,46 +304,61 @@ Code.renderContent = function() {
     xmlTextarea.value = xmlText;
     xmlTextarea.focus();
   } else if (content.id == 'content_javascript') {
-    var code = Blockly.JavaScript.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.textContent;
-      code = prettyPrintOne(code, 'js');
-      content.innerHTML = code;
-    }
+    Code.attemptCodeGeneration(Blockly.JavaScript, 'js');
   } else if (content.id == 'content_python') {
-    code = Blockly.Python.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.textContent;
-      code = prettyPrintOne(code, 'py');
-      content.innerHTML = code;
-    }
+    Code.attemptCodeGeneration(Blockly.Python, 'py');
   } else if (content.id == 'content_php') {
-    code = Blockly.PHP.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.textContent;
-      code = prettyPrintOne(code, 'php');
-      content.innerHTML = code;
-    }
+    Code.attemptCodeGeneration(Blockly.PHP, 'php');
   } else if (content.id == 'content_dart') {
-    code = Blockly.Dart.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.textContent;
-      code = prettyPrintOne(code, 'dart');
-      content.innerHTML = code;
-    }
+    Code.attemptCodeGeneration(Blockly.Dart, 'dart');
   } else if (content.id == 'content_lua') {
-    code = Blockly.Lua.workspaceToCode(Code.workspace);
+    Code.attemptCodeGeneration(Blockly.Lua, 'lua');
+  }
+};
+
+/**
+ * Attempt to generate the code and display it in the UI, pretty printed.
+ * @param generator {!Blockly.Generator} The generator to use.
+ * @param prettyPrintType {string} The file type key for the pretty printer.
+ */
+Code.attemptCodeGeneration = function(generator, prettyPrintType) {
+  var content = document.getElementById('content_' + Code.selected);
+  content.textContent = '';
+  if (Code.checkAllGeneratorFunctionsDefined(generator)) {
+    var code = generator.workspaceToCode(Code.workspace);
+
     content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
+    if (typeof PR.prettyPrintOne == 'function') {
       code = content.textContent;
-      code = prettyPrintOne(code, 'lua');
+      code = PR.prettyPrintOne(code, prettyPrintType);
       content.innerHTML = code;
     }
   }
+};
+
+/**
+ * Check whether all blocks in use have generator functions.
+ * @param generator {!Blockly.Generator} The generator to use.
+ */
+Code.checkAllGeneratorFunctionsDefined = function(generator) {
+  var blocks = Code.workspace.getAllBlocks();
+  var missingBlockGenerators = [];
+  for (var i = 0; i < blocks.length; i++) {
+    var blockType = blocks[i].type;
+    if (!generator[blockType]) {
+      if (missingBlockGenerators.indexOf(blockType) === -1) {
+        missingBlockGenerators.push(blockType);
+      }
+    }
+  }
+
+  var valid = missingBlockGenerators.length == 0;
+  if (!valid) {
+    var msg = 'The generator code for the following blocks not specified for '
+        + generator.name_ + ':\n - ' + missingBlockGenerators.join('\n - ');
+    Blockly.alert(msg);  // Assuming synchronous. No callback.
+  }
+  return valid;
 };
 
 /**
@@ -387,18 +395,20 @@ Code.init = function() {
   // format (eg. `<category name="%{BKY_CATLOGIC}">`).
   // These message keys need to be defined in `Blockly.Msg` in order to
   // be decoded by the library. Therefore, we'll use the `MSG` dictionary that's
-  // been defined for each language to import each category name message 
+  // been defined for each language to import each category name message
   // into `Blockly.Msg`.
   // TODO: Clean up the message files so this is done explicitly instead of
   // through this for-loop.
   for (var messageKey in MSG) {
-    if (messageKey.startsWith('cat')) {
+    if (messageKey.indexOf('cat') == 0) {
       Blockly.Msg[messageKey.toUpperCase()] = MSG[messageKey];
     }
   }
 
-  // Construct the toolbox XML.
+  // Construct the toolbox XML, replacing translated variable names.
   var toolboxText = document.getElementById('toolbox').outerHTML;
+  toolboxText = toolboxText.replace(/(^|[^%]){(\w+)}/g,
+      function(m, p1, p2) {return p1 + MSG[p2];});
   var toolboxXml = Blockly.Xml.textToDom(toolboxText);
 
   Code.workspace = Blockly.inject('content_blocks',
@@ -528,7 +538,7 @@ Code.runJS = function() {
 Code.discard = function() {
   var count = Code.workspace.getAllBlocks().length;
   if (count < 2 ||
-      window.confirm(Blockly.Msg.DELETE_ALL_BLOCKS.replace('%1', count))) {
+      window.confirm(Blockly.Msg['DELETE_ALL_BLOCKS'].replace('%1', count))) {
     Code.workspace.clear();
     if (window.location.hash) {
       window.location.hash = '';

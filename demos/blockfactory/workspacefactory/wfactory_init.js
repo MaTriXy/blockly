@@ -27,7 +27,8 @@
  * @author Emma Dauterman (evd2014)
  */
 
- goog.require('FactoryUtils');
+goog.require('goog.ui.PopupColorPicker');
+goog.require('goog.ui.ColorPicker');
 
 /**
  * Namespace for workspace factory initialization methods.
@@ -396,8 +397,9 @@ WorkspaceFactoryInit.addWorkspaceFactoryEventListeners_ = function(controller) {
     // Not listening for Blockly create events because causes the user to drop
     // blocks when dragging them into workspace. Could cause problems if ever
     // load blocks into workspace directly without calling updatePreview.
-    if (e.type == Blockly.Events.MOVE || e.type == Blockly.Events.DELETE ||
-          e.type == Blockly.Events.CHANGE) {
+    if (e.type == Blockly.Events.BLOCK_MOVE ||
+          e.type == Blockly.Events.BLOCK_DELETE ||
+          e.type == Blockly.Events.BLOCK_CHANGE) {
       controller.saveStateFromWorkspace();
       controller.updatePreview();
     }
@@ -406,7 +408,7 @@ WorkspaceFactoryInit.addWorkspaceFactoryEventListeners_ = function(controller) {
     // Only enable "Edit Block" when a block is selected and it has a
     // surrounding parent, meaning it is nested in another block (blocks that
     // are not nested in parents cannot be shadow blocks).
-    if (e.type == Blockly.Events.MOVE || (e.type == Blockly.Events.UI &&
+    if (e.type == Blockly.Events.BLOCK_MOVE || (e.type == Blockly.Events.UI &&
         e.element == 'selected')) {
       var selected = Blockly.selected;
 
@@ -480,7 +482,7 @@ WorkspaceFactoryInit.addWorkspaceFactoryEventListeners_ = function(controller) {
 
     // Convert actual shadow blocks added from the toolbox to user-generated
     // shadow blocks.
-    if (e.type == Blockly.Events.CREATE) {
+    if (e.type == Blockly.Events.BLOCK_CREATE) {
       controller.convertShadowBlocks();
 
       // Let the user create a Variables or Functions category if they use

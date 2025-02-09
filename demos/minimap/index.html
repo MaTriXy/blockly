@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <title>Blockly Demo: Minimap</title>
-  <script src="../../blockly_compressed.js"></script>
-  <script src="../../blocks_compressed.js"></script>
-  <script src="../../msg/js/en.js"></script>
+  <script src="../../dist/blockly_compressed.js"></script>
+  <script src="../../dist/blocks_compressed.js"></script>
+  <script src="../../build/msg/en.js"></script>
   <script src="minimap.js"></script>
   <style>
     body {
@@ -35,7 +35,7 @@
     </tr>
   </table>
 
-  <xml id="toolbox" style="display: none">
+  <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <block type="controls_if"></block>
     <block type="logic_compare"></block>
     <block type="controls_repeat_ext"></block>

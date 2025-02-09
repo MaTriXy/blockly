@@ -3,95 +3,32 @@
 <head>
 <meta charset="utf-8">
 <title>Blockly Generator Tests</title>
-<script src="../../blockly_uncompressed.js"></script>
-
-<script src="../../generators/javascript.js"></script>
-<script src="unittest_javascript.js"></script>
-<script src="../../generators/javascript/logic.js"></script>
-<script src="../../generators/javascript/loops.js"></script>
-<script src="../../generators/javascript/math.js"></script>
-<script src="../../generators/javascript/text.js"></script>
-<script src="../../generators/javascript/lists.js"></script>
-<script src="../../generators/javascript/colour.js"></script>
-<script src="../../generators/javascript/variables.js"></script>
-<script src="../../generators/javascript/procedures.js"></script>
-
-<script src="../../generators/python.js"></script>
-<script src="unittest_python.js"></script>
-<script src="../../generators/python/logic.js"></script>
-<script src="../../generators/python/loops.js"></script>
-<script src="../../generators/python/math.js"></script>
-<script src="../../generators/python/text.js"></script>
-<script src="../../generators/python/lists.js"></script>
-<script src="../../generators/python/colour.js"></script>
-<script src="../../generators/python/variables.js"></script>
-<script src="../../generators/python/procedures.js"></script>
-
-<script src="../../generators/php.js"></script>
-<script src="unittest_php.js"></script>
-<script src="../../generators/php/logic.js"></script>
-<script src="../../generators/php/loops.js"></script>
-<script src="../../generators/php/math.js"></script>
-<script src="../../generators/php/text.js"></script>
-<script src="../../generators/php/lists.js"></script>
-<script src="../../generators/php/colour.js"></script>
-<script src="../../generators/php/variables.js"></script>
-<script src="../../generators/php/procedures.js"></script>
-
-<script src="../../generators/lua.js"></script>
-<script src="unittest_lua.js"></script>
-<script src="../../generators/lua/logic.js"></script>
-<script src="../../generators/lua/loops.js"></script>
-<script src="../../generators/lua/math.js"></script>
-<script src="../../generators/lua/text.js"></script>
-<script src="../../generators/lua/lists.js"></script>
-<script src="../../generators/lua/colour.js"></script>
-<script src="../../generators/lua/variables.js"></script>
-<script src="../../generators/lua/procedures.js"></script>
-
-<script src="../../generators/dart.js"></script>
-<script src="unittest_dart.js"></script>
-<script src="../../generators/dart/logic.js"></script>
-<script src="../../generators/dart/loops.js"></script>
-<script src="../../generators/dart/math.js"></script>
-<script src="../../generators/dart/text.js"></script>
-<script src="../../generators/dart/lists.js"></script>
-<script src="../../generators/dart/colour.js"></script>
-<script src="../../generators/dart/variables.js"></script>
-<script src="../../generators/dart/procedures.js"></script>
-
-<script src="unittest.js"></script>
-<script src="../../msg/messages.js"></script>
-<script src="../../blocks/logic.js"></script>
-<script src="../../blocks/loops.js"></script>
-<script src="../../blocks/math.js"></script>
-<script src="../../blocks/text.js"></script>
-<script src="../../blocks/lists.js"></script>
-<script src="../../blocks/colour.js"></script>
-<script src="../../blocks/variables.js"></script>
-<script src="../../blocks/procedures.js"></script>
-
 <script>
-'use strict';
+// N.B.: This script depends on the following (module) script to load
+// Blockly, the code generators, and the unittest*.js scripts.  The
+// module script actually gets executed after this one, so although
+// Blockly will be available when the defined global functions are
+// called it isn't yet available when this script runs.
 
 var demoWorkspace = null;
 
 function start() {
-  demoWorkspace = Blockly.inject('blocklyDiv',
-      {grid:
-         {spacing: 25,
-          length: 3,
-          colour: '#ccc',
-          snap: true},
-       media: '../../media/',
-       toolbox: document.getElementById('toolbox'),
-       zoom: {controls: true, wheel: true}
-       });
+  demoWorkspace = Blockly.inject('blocklyDiv', {
+    grid: {
+      spacing: 25,
+      length: 3,
+      colour: '#ccc',
+      snap: true
+    },
+    media: '../../media/',
+    toolbox: document.getElementById('toolbox'),
+    zoom: {controls: true, wheel: true}
+  });
   changeIndex();
 }
 
-/*
- * Run this test to load all of the test files in all_test_names.  The contents
+/**
+ * Run this test to load all of the tests in the selected suites.  The contents
  * will be loaded into the workspace in order.  To test the generators:
  * - select your language from the buttons above the text area
  * - copy all of the generated code
@@ -101,20 +38,25 @@ function start() {
  * If some tests are failing, load test suites individually to continue
  * debugging.
  */
-function loadAll() {
+function loadSelected() {
   var output = document.getElementById('importExport');
   output.style.background = 'gray';
 
   var loadingElem = document.getElementById('loading');
   loadingElem.textContent = 'loading...';
 
-  var options = document.getElementById('testUrl').options;
-  for (var i = 0; i < options.length; i++) {
-    var testUrl = options[i].value;
-    if (testUrl) {
-      var xmlText = fetchFile(testUrl);
-      if (xmlText !== null) {
-        fromXml(testUrl, xmlText, /* opt_append */ true);
+  // Clear before adding all of the blocks.
+  demoWorkspace.clear();
+
+  var boxList = document.getElementsByClassName('suite_checkbox');
+  for (var i = 0; i < boxList.length; i++) {
+    if (boxList[i].checked) {
+      var testUrl = boxList[i].value;
+      if (testUrl) {
+        var xmlText = fetchFile(testUrl);
+        if (xmlText !== null) {
+          fromXml(testUrl, xmlText, /* opt_append */ true);
+        }
       }
     }
   }
@@ -122,14 +64,13 @@ function loadAll() {
   loadingElem.textContent = 'done';
 }
 
-function loadXml() {
-  var dropdown = document.getElementById('testUrl');
-  var url = dropdown.options[dropdown.selectedIndex].value;
+/**
+ * Ask the user for a file name, then load that file's contents.
+ */
+function loadOther() {
+  var url = window.prompt('Enter URL of test file.');
   if (!url) {
-    url = window.prompt('Enter URL of test file.');
-    if (!url) {
-      return;
-    }
+    return;
   }
   var xmlText = fetchFile(url);
   if (xmlText !== null) {
@@ -172,7 +113,7 @@ function fromXml(filename, xmlText, opt_append) {
     demoWorkspace.clear();
   }
   try {
-    var xmlDoc = Blockly.Xml.textToDom(xmlText);
+    var xmlDoc = Blockly.utils.xml.textToDom(xmlText);
     if (opt_append) {
       Blockly.Xml.appendDomToWorkspace(xmlDoc, demoWorkspace);
     } else {
@@ -186,6 +127,20 @@ function fromXml(filename, xmlText, opt_append) {
     console.error(e.stack ? e : msg);
     alert(msg);
     return;
+  }
+}
+
+function checkAll() {
+  var boxList = document.getElementsByClassName('suite_checkbox');
+  for (var i = 0; i < boxList.length; i++) {
+    boxList[i].checked = true;
+  }
+}
+
+function uncheckAll() {
+  var boxList = document.getElementsByClassName('suite_checkbox');
+  for (var i = 0; i < boxList.length; i++) {
+    boxList[i].checked = false;
   }
 }
 
@@ -206,35 +161,63 @@ function toXml() {
 
 function toJavaScript() {
   var code = '\'use strict\';\n\n'
-  code += Blockly.JavaScript.workspaceToCode(demoWorkspace);
+  code += javascriptGenerator.workspaceToCode(demoWorkspace);
   setOutput(code);
 }
 
 function toPython() {
-  var code = Blockly.Python.workspaceToCode(demoWorkspace);
+  var code = pythonGenerator.workspaceToCode(demoWorkspace);
   setOutput(code);
 }
 
 function toPhp() {
-  var code = Blockly.PHP.workspaceToCode(demoWorkspace);
+  var code = phpGenerator.workspaceToCode(demoWorkspace);
   setOutput(code);
 }
 
 function toLua() {
-  var code = Blockly.Lua.workspaceToCode(demoWorkspace);
+  var code = luaGenerator.workspaceToCode(demoWorkspace);
   setOutput(code);
 }
 
 function toDart() {
-  var code = Blockly.Dart.workspaceToCode(demoWorkspace);
+  var code = dartGenerator.workspaceToCode(demoWorkspace);
   setOutput(code);
 }
 
 function changeIndex() {
   var oneBasedIndex = document.getElementById('indexing').checked;
   demoWorkspace.options.oneBasedIndex = oneBasedIndex;
-  demoWorkspace.toolbox_.flyout_.workspace_.options.oneBasedIndex = oneBasedIndex;
+  demoWorkspace.getToolbox().flyout_.workspace_.options.oneBasedIndex = oneBasedIndex;
 }
+</script>
+
+<script type="module">
+import {loadScript} from '../scripts/load.mjs';
+
+import * as Blockly from '../../build/blockly.loader.mjs';
+import '../../build/blocks.loader.mjs';
+import {dartGenerator} from '../../build/dart.loader.mjs';
+import {luaGenerator} from '../../build/lua.loader.mjs';
+import {javascriptGenerator} from '../../build/javascript.loader.mjs';
+import {phpGenerator} from '../../build/php.loader.mjs';
+import {pythonGenerator} from '../../build/python.loader.mjs';
+
+globalThis.dartGenerator = dartGenerator;
+globalThis.luaGenerator = luaGenerator;
+globalThis.javascriptGenerator = javascriptGenerator;
+globalThis.phpGenerator = phpGenerator;
+globalThis.pythonGenerator = pythonGenerator;
+
+await loadScript('../../build/msg/en.js');
+await loadScript('./unittest_javascript.js');
+await loadScript('./unittest_python.js');
+await loadScript('./unittest_php.js');
+await loadScript('./unittest_lua.js');
+await loadScript('./unittest_dart.js');
+await loadScript('./unittest.js');
+
+start();
 </script>
 
 <style>
@@ -266,11 +249,11 @@ h1 {
 }
 </style>
 </head>
-<body onload="start()">
+<body>
 
   <div id="blocklyDiv"></div>
 
-  <xml id="toolbox" style="display: none">
+  <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="Unit test" colour="65">
       <block type="unittest_main"></block>
       <block type="unittest_assertequals">
@@ -320,6 +303,7 @@ h1 {
       <block type="math_constrain"></block>
       <block type="math_random_int"></block>
       <block type="math_random_float"></block>
+      <block type="math_atan2"></block>
     </category>
     <category name="Text" colour="160">
       <block type="text"></block>
@@ -352,12 +336,6 @@ h1 {
       <block type="lists_split"></block>
       <block type="lists_reverse"></block>
     </category>
-    <category name="Colour" colour="20">
-      <block type="colour_picker"></block>
-      <block type="colour_random"></block>
-      <block type="colour_rgb"></block>
-      <block type="colour_blend"></block>
-    </category>
     <sep></sep>
     <category name="Variables" colour="330" custom="VARIABLE"></category>
     <category name="Functions" colour="290" custom="PROCEDURE"></category>
@@ -368,26 +346,27 @@ h1 {
 
     <p><a href="https://developers.google.com/blockly/guides/modify/web/unit-testing">See the docs</a> for details on running the tests.
 
-    <p>
-      <select id="testUrl">
-        <option value="logic.xml">Logic</option>
-        <option value="loops1.xml">Loops 1 (repeat, while, foreach)</option>
-        <option value="loops2.xml">Loops 2 (count)</option>
-        <option value="loops3.xml">Loops 3 (continue, break)</option>
-        <option value="math.xml">Math</option>
-        <option value="text.xml">Text</option>
-        <option value="lists.xml">Lists</option>
-        <option value="colour.xml">Colour</option>
-        <option value="variables.xml">Variables</option>
-        <option value="functions.xml">Functions</option>
-        <option value="">Other...</option>
-      </select>
-      <input type="button" value="Load" onclick="loadXml()">
-    </p>
+
+    <div id="checkboxes">
+      <input type="button" value="Check all" onclick="checkAll()">
+      <input type="button" value="Uncheck all" onclick="uncheckAll()"><br/>
+      <input type="checkbox" class="suite_checkbox" value="logic.xml">Logic</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="loops1.xml">Loops 1 (repeat, while, foreach)</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="loops2.xml">Loops 2 (count)</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="loops3.xml">Loops 3 (continue, break)</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="math.xml">Math</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="text.xml">Text</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="lists.xml">Lists</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="variables.xml">Variables</input><br/>
+      <input type="checkbox" class="suite_checkbox" value="functions.xml">Functions</input><br/>
+    </div>
 
     <p>
-      <input type="button" value="Load all" id="loadAllBtn" onclick="loadAll()">
-      <label for="loadAllBtn" id="loading"></label>
+      <input type="button" value="Load selected" id="loadSelectedBtn" onclick="loadSelected()">
+      <label for="loadSelectedBtn" id="loading"></label>
+    </p>
+    <p>
+      <input type="button" value="Load by file name" onclick="loadOther()">
     </p>
 
     <p>
@@ -404,7 +383,7 @@ h1 {
       </div>
       <div style="display: inline-block;">
         <input type="button" value="Python" onclick="toPython()">
-        <br><a target="_blank" href="https://repl.it/languages/python">interpreter</a>
+        <br><a target="_blank" href="https://repl.it/languages/python3">interpreter</a>
       </div>
       <div style="display: inline-block;">
         <input type="button" value="PHP" onclick="toPhp()">
@@ -412,7 +391,7 @@ h1 {
       </div>
       <div style="display: inline-block;">
         <input type="button" value="Lua" onclick="toLua()">
-        <br><a target="_blank" href="http://rextester.com/l/lua_online_compiler">interpreter</a>
+        <br><a target="_blank" href="https://rextester.com/l/lua_online_compiler">interpreter</a>
       </div>
       <div style="display: inline-block;">
         <input type="button" value="Dart" onclick="toDart()">

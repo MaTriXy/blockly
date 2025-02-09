@@ -1,8 +1,7 @@
 #!/bin/bash
 
-if [ "${TRAVIS_OS_NAME}" == "linux" ]
+if [ "${RUNNER_OS}" == "Linux" ]
   then
-    export CHROME_BIN="/usr/bin/google-chrome"
-    export DISPLAY=:99.0
-    sh -e /etc/init.d/xvfb start &
+    Xvfb :99 &
+    export DISPLAY=:99 &
 fi

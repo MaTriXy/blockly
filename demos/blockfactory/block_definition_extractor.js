@@ -17,8 +17,6 @@
  *
  * The <code>exampleBlocklyBlock</code> is usually the block loaded into the
  * preview workspace after manually entering the block definition.
- *
- * @author JC-Orozco (Juan Carlos Orozco), AnmAtAnm (Andrew n marshall)
  */
 'use strict';
 
@@ -39,10 +37,8 @@ var BlockDefinitionExtractor = BlockDefinitionExtractor || Object.create(null);
  *     workspace.
  */
 BlockDefinitionExtractor.buildBlockFactoryWorkspace = function(block) {
-  var workspaceXml = document.createElement('xml');
-  workspaceXml.append(
-      BlockDefinitionExtractor.factoryBase_(block, block.type));
-
+  var workspaceXml = Blockly.utils.xml.createElement('xml');
+  workspaceXml.append(BlockDefinitionExtractor.factoryBase_(block, block.type));
   return workspaceXml;
 };
 
@@ -51,14 +47,14 @@ BlockDefinitionExtractor.buildBlockFactoryWorkspace = function(block) {
  * inner text.
  *
  * @param {string} name New element tag name.
- * @param {Map<String,String>} opt_attrs Optional list of attributes.
- * @param {string?} opt_text Optional inner text.
+ * @param {!Object<string, string>=} opt_attrs Optional list of attributes.
+ * @param {string=} opt_text Optional inner text.
  * @return {!Element} The newly created element.
  * @private
  */
 BlockDefinitionExtractor.newDomElement_ = function(name, opt_attrs, opt_text) {
   // Avoid createDom(..)'s attributes argument for being too HTML specific.
-  var elem = document.createElement(name);
+  var elem = Blockly.utils.xml.createElement(name);
   if (opt_attrs) {
     for (var key in opt_attrs) {
       elem.setAttribute(key, opt_attrs[key]);
@@ -75,7 +71,7 @@ BlockDefinitionExtractor.newDomElement_ = function(name, opt_attrs, opt_text) {
  * requested type.
  *
  * @param {string} type Type name of desired connection constraint.
- * @return {!Element} The <block> representing the the constraint type.
+ * @return {!Element} The <block> representing the constraint type.
  * @private
  */
 BlockDefinitionExtractor.buildBlockForType_ = function(type) {
@@ -114,7 +110,7 @@ BlockDefinitionExtractor.buildTypeConstraintBlockForConnection_ =
     } else if (connection.check_.length === 1) {
       typeBlock = BlockDefinitionExtractor.buildBlockForType_(
           connection.check_[0]);
-    } else if (connection.check_.length > 1 ) {
+    } else if (connection.check_.length > 1) {
       typeBlock = BlockDefinitionExtractor.typeGroup_(connection.check_);
     }
   } else {
@@ -291,14 +287,16 @@ BlockDefinitionExtractor.parseInputs_ = function(block) {
  * @private
  */
 BlockDefinitionExtractor.input_ = function(input, align) {
-  var isDummy = (input.type === Blockly.DUMMY_INPUT);
+  var hasConnector = (input.type === Blockly.inputs.inputTypes.VALUE || input.type === Blockly.inputs.inputTypes.STATEMENT);
   var inputTypeAttr =
-      isDummy ? 'input_dummy' :
-      (input.type === Blockly.INPUT_VALUE) ? 'input_value' : 'input_statement';
+      input.type === Blockly.inputs.inputTypes.DUMMY ? 'input_dummy' :
+      input.type === Blockly.inputs.inputTypes.END_ROW ? 'input_end_row' :
+      input.type === Blockly.inputs.inputTypes.VALUE ? 'input_value' :
+      'input_statement';
   var inputDefBlock =
       BlockDefinitionExtractor.newDomElement_('block', {type: inputTypeAttr});
 
-  if (!isDummy) {
+  if (hasConnector) {
     inputDefBlock.append(BlockDefinitionExtractor.newDomElement_(
         'field', {name: 'INPUTNAME'}, input.name));
   }
@@ -311,7 +309,7 @@ BlockDefinitionExtractor.input_ = function(input, align) {
   fieldsDef.append(fieldsXml);
   inputDefBlock.append(fieldsDef);
 
-  if (!isDummy) {
+  if (hasConnector) {
     var typeValue = BlockDefinitionExtractor.newDomElement_(
         'value', {name: 'TYPE'});
     typeValue.append(
@@ -478,7 +476,7 @@ BlockDefinitionExtractor.buildFieldDropdown_ = function(dropdown) {
   } else if (Array.isArray(menuGenerator)) {
     var options = menuGenerator;
   } else {
-    throw new Error('Unrecognized type of menuGenerator: ' + menuGenerator);
+    throw Error('Unrecognized type of menuGenerator: ' + menuGenerator);
   }
 
   var fieldDropdown = BlockDefinitionExtractor.newDomElement_(
@@ -558,7 +556,7 @@ BlockDefinitionExtractor.buildFieldColour_ =
 };
 
 /**
- * Creates a <block> element representing a FieldVaraible definition.
+ * Creates a <block> element representing a FieldVariable definition.
  *
  * @param {string} fieldName The identifying name of the field.
  * @param {string} varName The variables
@@ -581,7 +579,7 @@ BlockDefinitionExtractor.buildFieldVariable_ = function(fieldName, varName) {
  * @param {string} src The URL of the field image.
  * @param {number} width The pixel width of the source image
  * @param {number} height The pixel height of the source image.
- * @param {string} alt Alterante text to describe image.
+ * @param {string} alt Alternate text to describe image.
  * @private
  */
 BlockDefinitionExtractor.buildFieldImage_ =
@@ -695,7 +693,7 @@ BlockDefinitionExtractor.typeList_ = function() {
  * Creates a <block> element representing the given custom connection
  * constraint type name.
  *
- * @param {string} type The connection constratin type name.
+ * @param {string} type The connection constraint type name.
  * @return {Element} The <block> element representing a custom input type
  *     constraint.
  * @private
@@ -709,7 +707,7 @@ BlockDefinitionExtractor.typeOther_ = function(type) {
 };
 
 /**
- * Creates a block Element for the color_hue block, with the given hue.
+ * Creates a block Element for the colour_hue block, with the given hue.
  * @param hue {number} The hue value, from 0 to 360.
  * @return {Element} The <block> Element representing a colour_hue block
  *     with the given hue.
@@ -719,7 +717,7 @@ BlockDefinitionExtractor.colourBlockFromHue_ = function(hue) {
   var colourBlock = BlockDefinitionExtractor.newDomElement_(
       'block', {type: 'colour_hue'});
   colourBlock.append(BlockDefinitionExtractor.newDomElement_('mutation', {
-    colour: Blockly.hueToRgb(hue)
+    colour: Blockly.utils.colour.hueToHex(hue)
   }));
   colourBlock.append(BlockDefinitionExtractor.newDomElement_(
       'field', {name: 'HUE'}, hue.toString()));
